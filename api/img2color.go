@@ -1,4 +1,4 @@
-package handler
+package main
 
 import (
 	"crypto/md5"
@@ -13,7 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
+	"golang.org/x/image/webp" // webp格式
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"github.com/lucasb-eyer/go-colorful"
@@ -118,8 +118,14 @@ func extractMainColor(imgURL string) (string, error) {
 	defer resp.Body.Close()
 
 	var img image.Image
-
-	img, err = imaging.Decode(resp.Body)
+	contentType := resp.Header.Get("Content-Type")
+	switch contentType {
+	// imaging不支持webp处理，将其改用webp
+	case "image/webp":
+		img, err = webp.Decode(resp.Body)
+	default:
+		img, err = imaging.Decode(resp.Body)
+	}
 
 	if err != nil {
 		return "", err
